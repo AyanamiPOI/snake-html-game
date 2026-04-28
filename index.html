@@ -3,14 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Snake mit Touch</title>
+  <title>Snake mit Hauptmenü</title>
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 12px; background: #101010; color: #fff; font-family: system-ui, sans-serif; touch-action: none; }
     .wrap { text-align: center; width: min(94vw, 620px); }
     h1 { margin: 0 0 10px; font-size: clamp(1.4rem, 4vw, 2rem); }
+    h2, h3 { margin: 0; }
     canvas { width: 100%; max-width: 560px; aspect-ratio: 1; background: #1a1a1a; border: 2px solid #3a3a3a; image-rendering: pixelated; border-radius: 8px; }
+    button { width: 76px; height: 58px; border: 1px solid #4b4b4b; border-radius: 12px; background: #222; color: #fff; font-size: 24px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    button:active { transform: scale(0.97); background: #2d2d2d; }
+    .hidden { display: none !important; }
+    .menu-card { display: grid; gap: 14px; width: min(100%, 460px); margin: 0 auto; padding: 20px; border: 1px solid #3a3a3a; border-radius: 18px; background: #181818; box-shadow: 0 16px 50px rgba(0, 0, 0, 0.35); }
+    .menu-card p { margin: 0; opacity: 0.9; line-height: 1.5; }
+    .menu-stat { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #333; border-radius: 12px; background: #202020; }
+    .menu-stat strong { font-size: 22px; }
+    .menu-button { width: 100%; height: 50px; font-size: 17px; font-weight: 700; }
+    .difficulty-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .difficulty-button { width: 100%; height: 48px; font-size: 15px; }
+    .difficulty-button.active { border-color: #87ff39; background: #27451f; }
     .info { margin-top: 10px; opacity: 0.95; font-size: 14px; line-height: 1.5; }
     .stats, .actions, .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .stats { margin-top: 8px; gap: 10px; }
@@ -18,61 +30,94 @@
     .controls { margin-top: 14px; display: grid; gap: 10px; justify-content: center; user-select: none; -webkit-user-select: none; }
     .dpad { display: grid; grid-template-columns: repeat(3, 76px); gap: 8px; justify-content: center; align-items: center; }
     .dpad-spacer { width: 76px; height: 58px; }
-    button { width: 76px; height: 58px; border: 1px solid #4b4b4b; border-radius: 12px; background: #222; color: #fff; font-size: 24px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     .action-button { width: auto; min-width: 112px; height: 44px; padding: 0 14px; font-size: 15px; }
     .center-button { font-size: 14px; font-weight: 700; }
-    button:active { transform: scale(0.97); background: #2d2d2d; }
     @media (max-height: 760px) { canvas { max-width: 50vh; } .controls { margin-top: 10px; } button { height: 52px; } .dpad { grid-template-columns: repeat(3, 70px); } .dpad-spacer { width: 70px; height: 52px; } }
   </style>
 </head>
 <body>
   <main class="wrap">
     <h1>🐍 Snake</h1>
-    <canvas id="game" width="560" height="560" aria-label="Snake Spielfeld"></canvas>
-    <div class="info">
-      Tastatur: Pfeiltasten / WASD · Pause: P oder Leertaste · Neustart: R<br />
-      Handy/Tablet: Steuerkreuz, Touch-Buttons oder Wischen
-      <div class="stats" aria-live="polite">
-        <span>Score: <strong id="score">0</strong></span>
-        <span>Bestwert: <strong id="highScore">0</strong></span>
-      </div>
-      <div class="actions" aria-label="Spielaktionen">
-        <button class="action-button" type="button" data-action="pause">Pause</button>
-        <button class="action-button" type="button" data-action="restart">Neustart</button>
-        <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
-      </div>
-    </div>
 
-    <div class="controls" aria-label="Handy und Tablet Steuerung">
-      <div class="dpad">
-        <span class="dpad-spacer" aria-hidden="true"></span>
-        <button type="button" data-dir="up" aria-label="Hoch">▲</button>
-        <span class="dpad-spacer" aria-hidden="true"></span>
-        <button type="button" data-dir="left" aria-label="Links">◀</button>
-        <button class="center-button" type="button" data-action="pause" aria-label="Pause oder Weiter">Pause</button>
-        <button type="button" data-dir="right" aria-label="Rechts">▶</button>
-        <span class="dpad-spacer" aria-hidden="true"></span>
-        <button type="button" data-dir="down" aria-label="Runter">▼</button>
-        <span class="dpad-spacer" aria-hidden="true"></span>
+    <section id="mainMenu" class="menu-card" aria-label="Hauptmenü">
+      <h2>Hauptmenü</h2>
+      <p>Wähle einen Schwierigkeitsgrad und starte ein neues Spiel.</p>
+      <div class="menu-stat">
+        <span>Highscore</span>
+        <strong id="menuHighScore">0</strong>
       </div>
-      <div class="row">
-        <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
-        <button class="action-button" type="button" data-action="restart">Neustart</button>
+      <div>
+        <h3>Schwierigkeitsgrad</h3>
+        <div class="difficulty-buttons" aria-label="Schwierigkeitsgrad wählen">
+          <button class="difficulty-button" type="button" data-difficulty="easy">Leicht</button>
+          <button class="difficulty-button" type="button" data-difficulty="normal">Normal</button>
+          <button class="difficulty-button" type="button" data-difficulty="hard">Schwer</button>
+        </div>
       </div>
-    </div>
+      <button class="menu-button" type="button" data-action="newgame">Neues Spiel</button>
+    </section>
+
+    <section id="gameArea" class="hidden" aria-label="Spielbereich">
+      <canvas id="game" width="560" height="560" aria-label="Snake Spielfeld"></canvas>
+      <div class="info">
+        Tastatur: Pfeiltasten / WASD · Pause: P oder Leertaste · Neustart: R<br />
+        Handy/Tablet: Steuerkreuz, Touch-Buttons oder Wischen
+        <div class="stats" aria-live="polite">
+          <span>Score: <strong id="score">0</strong></span>
+          <span>Bestwert: <strong id="highScore">0</strong></span>
+          <span>Modus: <strong id="difficultyLabel">Normal</strong></span>
+        </div>
+        <div class="actions" aria-label="Spielaktionen">
+          <button class="action-button" type="button" data-action="pause">Pause</button>
+          <button class="action-button" type="button" data-action="restart">Neustart</button>
+          <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
+          <button class="action-button" type="button" data-action="menu">Menü</button>
+        </div>
+      </div>
+
+      <div class="controls" aria-label="Handy und Tablet Steuerung">
+        <div class="dpad">
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <button type="button" data-dir="up" aria-label="Hoch">▲</button>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <button type="button" data-dir="left" aria-label="Links">◀</button>
+          <button class="center-button" type="button" data-action="pause" aria-label="Pause oder Weiter">Pause</button>
+          <button type="button" data-dir="right" aria-label="Rechts">▶</button>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <button type="button" data-dir="down" aria-label="Runter">▼</button>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+        </div>
+        <div class="row">
+          <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
+          <button class="action-button" type="button" data-action="restart">Neustart</button>
+          <button class="action-button" type="button" data-action="menu">Menü</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
+    const mainMenu = document.getElementById("mainMenu");
+    const gameArea = document.getElementById("gameArea");
+    const menuHighScoreEl = document.getElementById("menuHighScore");
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("score");
     const highScoreEl = document.getElementById("highScore");
+    const difficultyLabelEl = document.getElementById("difficultyLabel");
     const pauseButtons = document.querySelectorAll('[data-action="pause"]');
     const autoPlayButtons = document.querySelectorAll('[data-action="autoplay"]');
+    const difficultyButtons = document.querySelectorAll("[data-difficulty]");
 
     const gridSize = 21;
     const tileSize = canvas.width / gridSize;
     const highScoreKey = "snakeHighScore";
+    const difficultyKey = "snakeDifficulty";
+    const difficulties = {
+      easy: { label: "Leicht", startTickMs: 155, minTickMs: 85, speedStep: 1 },
+      normal: { label: "Normal", startTickMs: 120, minTickMs: 65, speedStep: 2 },
+      hard: { label: "Schwer", startTickMs: 90, minTickMs: 50, speedStep: 3 },
+    };
     const directions = [
       { name: "up", vector: { x: 0, y: -1 } },
       { name: "down", vector: { x: 0, y: 1 } },
@@ -80,7 +125,10 @@
       { name: "right", vector: { x: 1, y: 0 } },
     ];
 
-    let snake, dir, nextDir, food, score, highScore, gameOver, gameWon, isPaused, isAutoPlaying, tickMs;
+    let selectedDifficulty = localStorage.getItem(difficultyKey) || "normal";
+    if (!difficulties[selectedDifficulty]) selectedDifficulty = "normal";
+
+    let snake, dir, nextDir, food, score, highScore, gameOver, gameWon, isPaused, isAutoPlaying, tickMs, isMenuOpen;
 
     const samePosition = (a, b) => a.x === b.x && a.y === b.y;
     const positionKey = (position) => `${position.x},${position.y}`;
@@ -97,9 +145,21 @@
       try { localStorage.setItem(highScoreKey, String(value)); } catch { /* Highscore ist optional. */ }
     }
 
+    function saveDifficulty() {
+      try { localStorage.setItem(difficultyKey, selectedDifficulty); } catch { /* optional */ }
+    }
+
+    function updateDifficultyUi() {
+      difficultyButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.difficulty === selectedDifficulty);
+      });
+      if (difficultyLabelEl) difficultyLabelEl.textContent = difficulties[selectedDifficulty].label;
+    }
+
     function updateScoreDisplay() {
       scoreEl.textContent = score;
       highScoreEl.textContent = highScore;
+      menuHighScoreEl.textContent = readHighScore();
     }
 
     function updatePauseButtons() {
@@ -108,6 +168,22 @@
 
     function updateAutoPlayButtons() {
       autoPlayButtons.forEach((button) => { button.textContent = isAutoPlaying ? "Autoplay aus" : "Autoplay"; });
+    }
+
+    function showMainMenu() {
+      isMenuOpen = true;
+      isPaused = true;
+      mainMenu.classList.remove("hidden");
+      gameArea.classList.add("hidden");
+      menuHighScoreEl.textContent = readHighScore();
+      updateDifficultyUi();
+    }
+
+    function startNewGame() {
+      mainMenu.classList.add("hidden");
+      gameArea.classList.remove("hidden");
+      isMenuOpen = false;
+      resetGame();
     }
 
     function placeFood() {
@@ -125,7 +201,8 @@
       food = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
     }
 
-    function reset() {
+    function resetGame() {
+      const difficulty = difficulties[selectedDifficulty];
       snake = [{ x: 10, y: 10 }];
       dir = { x: 1, y: 0 };
       nextDir = { x: 1, y: 0 };
@@ -135,7 +212,8 @@
       gameWon = false;
       isPaused = false;
       isAutoPlaying = false;
-      tickMs = 120;
+      tickMs = difficulty.startTickMs;
+      updateDifficultyUi();
       updatePauseButtons();
       updateAutoPlayButtons();
       updateScoreDisplay();
@@ -241,13 +319,13 @@
     }
 
     function togglePause() {
-      if (gameOver || gameWon) return;
+      if (isMenuOpen || gameOver || gameWon) return;
       isPaused = !isPaused;
       updatePauseButtons();
     }
 
     function toggleAutoPlay() {
-      if (gameOver || gameWon) return;
+      if (isMenuOpen || gameOver || gameWon) return;
       isAutoPlaying = !isAutoPlaying;
       if (isAutoPlaying && isPaused) {
         isPaused = false;
@@ -257,7 +335,7 @@
     }
 
     function update() {
-      if (gameOver || gameWon || isPaused) return;
+      if (isMenuOpen || gameOver || gameWon || isPaused) return;
       if (isAutoPlaying) chooseAutoPlayDirection();
       dir = nextDir;
       const simulation = simulateMove(snake, dir, food);
@@ -267,8 +345,9 @@
       }
       snake = simulation.snake;
       if (simulation.ateFood) {
+        const difficulty = difficulties[selectedDifficulty];
         score += 1;
-        tickMs = Math.max(65, tickMs - 2);
+        tickMs = Math.max(difficulty.minTickMs, tickMs - difficulty.speedStep);
         if (score > highScore) {
           highScore = score;
           saveHighScore(highScore);
@@ -318,15 +397,15 @@
         ctx.font = "16px sans-serif";
         ctx.fillText("Autoplay", 24, 34);
       }
-      if (isPaused) drawOverlay("Pause", "Touch: Weiter drücken");
-      if (gameOver) drawOverlay("Game Over", "Touch: Neustart drücken");
-      if (gameWon) drawOverlay("Gewonnen!", "Touch: Neustart drücken");
+      if (isPaused && !isMenuOpen) drawOverlay("Pause", "Touch: Weiter drücken");
+      if (gameOver) drawOverlay("Game Over", "Neustart oder Menü drücken");
+      if (gameWon) drawOverlay("Gewonnen!", "Neustart oder Menü drücken");
     }
 
     function gameLoop() {
       update();
-      draw();
-      setTimeout(() => requestAnimationFrame(gameLoop), tickMs);
+      if (!isMenuOpen) draw();
+      setTimeout(() => requestAnimationFrame(gameLoop), tickMs || 120);
     }
 
     function bindControlButton(button, handler) {
@@ -341,7 +420,9 @@
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
-      if (key === "r") return reset();
+      if (isMenuOpen && (key === "enter" || event.key === " ")) return startNewGame();
+      if (key === "escape") return showMainMenu();
+      if (key === "r") return isMenuOpen ? startNewGame() : resetGame();
       if (key === "p" || event.key === " ") return togglePause();
       if (key === "arrowup" || key === "w") setDirection("up");
       if (key === "arrowdown" || key === "s") setDirection("down");
@@ -349,12 +430,17 @@
       if (key === "arrowright" || key === "d") setDirection("right");
     });
 
-    document.querySelectorAll("button[data-dir]").forEach((button) => {
-      bindControlButton(button, () => setDirection(button.dataset.dir));
-    });
+    document.querySelectorAll("button[data-dir]").forEach((button) => bindControlButton(button, () => setDirection(button.dataset.dir)));
     document.querySelectorAll('[data-action="pause"]').forEach((button) => bindControlButton(button, togglePause));
-    document.querySelectorAll('[data-action="restart"]').forEach((button) => bindControlButton(button, reset));
+    document.querySelectorAll('[data-action="restart"]').forEach((button) => bindControlButton(button, resetGame));
     document.querySelectorAll('[data-action="autoplay"]').forEach((button) => bindControlButton(button, toggleAutoPlay));
+    document.querySelectorAll('[data-action="newgame"]').forEach((button) => bindControlButton(button, startNewGame));
+    document.querySelectorAll('[data-action="menu"]').forEach((button) => bindControlButton(button, showMainMenu));
+    difficultyButtons.forEach((button) => bindControlButton(button, () => {
+      selectedDifficulty = button.dataset.difficulty;
+      saveDifficulty();
+      updateDifficultyUi();
+    }));
 
     let touchStartX = 0;
     let touchStartY = 0;
@@ -376,10 +462,11 @@
     }, { passive: true });
 
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden && !gameOver && !gameWon && !isPaused) togglePause();
+      if (document.hidden && !isMenuOpen && !gameOver && !gameWon && !isPaused) togglePause();
     });
 
-    reset();
+    resetGame();
+    showMainMenu();
     gameLoop();
   </script>
 </body>
