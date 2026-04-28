@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake mit Touch</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #101010;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      touch-action: none;
+    }
+
+    .wrap {
+      text-align: center;
+      width: min(92vw, 480px);
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 1;
+      background: #1a1a1a;
+      border: 2px solid #3a3a3a;
+      image-rendering: pixelated;
+      border-radius: 8px;
+    }
+
+    .info {
+      margin-top: 10px;
+      opacity: 0.95;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .controls {
+      margin-top: 14px;
+      display: grid;
+      gap: 8px;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button {
+      width: 70px;
+      height: 54px;
+      border: 1px solid #4b4b4b;
+      border-radius: 10px;
+      background: #222;
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:active {
+      transform: scale(0.97);
+      background: #2d2d2d;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>🐍 Snake</h1>
+    <canvas id="game" width="420" height="420" aria-label="Snake Spielfeld"></canvas>
+    <div class="info">
+      Tastatur: Pfeiltasten / WASD · Neustart: R<br />
+      Touch: Buttons nutzen oder auf dem Spielfeld wischen<br />
+      Score: <span id="score">0</span>
+    </div>
+
+    <div class="controls" aria-label="Touch Steuerung">
+      <div class="row">
+        <button type="button" data-dir="up" aria-label="Hoch">▲</button>
+      </div>
+      <div class="row">
+        <button type="button" data-dir="left" aria-label="Links">◀</button>
+        <button type="button" data-dir="down" aria-label="Runter">▼</button>
+        <button type="button" data-dir="right" aria-label="Rechts">▶</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+
+    const gridSize = 21;
+    const tileSize = canvas.width / gridSize;
+
+    let snake;
+    let dir;
+    let nextDir;
+    let food;
+    let score;
+    let gameOver;
+    let tickMs;
+
+    function reset() {
+      snake = [{ x: 10, y: 10 }];
+      dir = { x: 1, y: 0 };
+      nextDir = { x: 1, y: 0 };
+      score = 0;
+      gameOver = false;
+      tickMs = 120;
+      scoreEl.textContent = score;
+      placeFood();
+    }
+
+    function placeFood() {
+      while (true) {
+        const candidate = {
+          x: Math.floor(Math.random() * gridSize),
+          y: Math.floor(Math.random() * gridSize),
+        };
+
+        const snakeOnTile = snake.some(
+          (segment) => segment.x === candidate.x && segment.y === candidate.y,
+        );
+
+        if (!snakeOnTile) {
+          food = candidate;
+          return;
+        }
+      }
+    }
+
+    function setDirection(direction) {
+      if (direction === "up" && dir.y !== 1) nextDir = { x: 0, y: -1 };
+      if (direction === "down" && dir.y !== -1) nextDir = { x: 0, y: 1 };
+      if (direction === "left" && dir.x !== 1) nextDir = { x: -1, y: 0 };
+      if (direction === "right" && dir.x !== -1) nextDir = { x: 1, y: 0 };
+    }
+
+    function update() {
+      if (gameOver) {
+        return;
+      }
+
+      dir = nextDir;
+      const head = snake[0];
+      const newHead = { x: head.x + dir.x, y: head.y + dir.y };
+
+      const wallHit =
+        newHead.x < 0 ||
+        newHead.x >= gridSize ||
+        newHead.y < 0 ||
+        newHead.y >= gridSize;
+
+      if (wallHit) {
+        gameOver = true;
+        return;
+      }
+
+      const bodyHit = snake.some(
+        (segment) => segment.x === newHead.x && segment.y === newHead.y,
+      );
+
+      if (bodyHit) {
+        gameOver = true;
+        return;
+      }
+
+      snake.unshift(newHead);
+
+      if (newHead.x === food.x && newHead.y === food.y) {
+        score += 1;
+        scoreEl.textContent = score;
+        tickMs = Math.max(65, tickMs - 2);
+        placeFood();
+      } else {
+        snake.pop();
+      }
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = "#242424";
+      for (let i = 0; i <= gridSize; i += 1) {
+        const p = i * tileSize;
+        ctx.beginPath();
+        ctx.moveTo(p, 0);
+        ctx.lineTo(p, canvas.height);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, p);
+        ctx.lineTo(canvas.width, p);
+        ctx.stroke();
+      }
+    }
+
+    function draw() {
+      ctx.fillStyle = "#1a1a1a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawGrid();
+
+      ctx.fillStyle = "#ff4d4d";
+      ctx.fillRect(
+        food.x * tileSize + 2,
+        food.y * tileSize + 2,
+        tileSize - 4,
+        tileSize - 4,
+      );
+
+      snake.forEach((segment, index) => {
+        ctx.fillStyle = index === 0 ? "#87ff39" : "#40d553";
+        ctx.fillRect(
+          segment.x * tileSize + 1,
+          segment.y * tileSize + 1,
+          tileSize - 2,
+          tileSize - 2,
+        );
+      });
+
+      if (gameOver) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.font = "bold 34px sans-serif";
+        ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = "16px sans-serif";
+        ctx.fillText("R für Neustart", canvas.width / 2, canvas.height / 2 + 22);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      setTimeout(() => requestAnimationFrame(gameLoop), tickMs);
+    }
+
+    window.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      if (key === "r") {
+        reset();
+        return;
+      }
+      if (key === "arrowup" || key === "w") setDirection("up");
+      if (key === "arrowdown" || key === "s") setDirection("down");
+      if (key === "arrowleft" || key === "a") setDirection("left");
+      if (key === "arrowright" || key === "d") setDirection("right");
+    });
+
+    document.querySelectorAll("button[data-dir]").forEach((button) => {
+      const direction = button.dataset.dir;
+      const handler = (event) => {
+        event.preventDefault();
+        setDirection(direction);
+      };
+      button.addEventListener("click", handler);
+      button.addEventListener("touchstart", handler, { passive: false });
+    });
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    canvas.addEventListener(
+      "touchstart",
+      (event) => {
+        const touch = event.changedTouches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      },
+      { passive: true },
+    );
+
+    canvas.addEventListener(
+      "touchend",
+      (event) => {
+        const touch = event.changedTouches[0];
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+        const minSwipe = 22;
+
+        if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipe) {
+          return;
+        }
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+          setDirection(dx > 0 ? "right" : "left");
+        } else {
+          setDirection(dy > 0 ? "down" : "up");
+        }
+      },
+      { passive: true },
+    );
+
+    reset();
+    gameLoop();
+  </script>
+</body>
+</html>
