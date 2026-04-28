@@ -6,18 +6,23 @@
   <title>Snake mit Touch</title>
   <style>
     :root { color-scheme: dark; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #101010; color: #fff; font-family: system-ui, sans-serif; touch-action: none; }
-    .wrap { text-align: center; width: min(92vw, 620px); }
-    h1 { margin-bottom: 10px; font-size: clamp(1.4rem, 4vw, 2rem); }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 12px; background: #101010; color: #fff; font-family: system-ui, sans-serif; touch-action: none; }
+    .wrap { text-align: center; width: min(94vw, 620px); }
+    h1 { margin: 0 0 10px; font-size: clamp(1.4rem, 4vw, 2rem); }
     canvas { width: 100%; max-width: 560px; aspect-ratio: 1; background: #1a1a1a; border: 2px solid #3a3a3a; image-rendering: pixelated; border-radius: 8px; }
     .info { margin-top: 10px; opacity: 0.95; font-size: 14px; line-height: 1.5; }
     .stats, .actions, .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .stats { margin-top: 8px; gap: 10px; }
     .actions { margin-top: 10px; }
-    .controls { margin-top: 14px; display: grid; gap: 8px; justify-content: center; user-select: none; -webkit-user-select: none; }
-    button { width: 70px; height: 54px; border: 1px solid #4b4b4b; border-radius: 10px; background: #222; color: #fff; font-size: 22px; cursor: pointer; touch-action: manipulation; }
-    .action-button { width: auto; min-width: 104px; height: 42px; padding: 0 14px; font-size: 15px; }
+    .controls { margin-top: 14px; display: grid; gap: 10px; justify-content: center; user-select: none; -webkit-user-select: none; }
+    .dpad { display: grid; grid-template-columns: repeat(3, 76px); gap: 8px; justify-content: center; align-items: center; }
+    .dpad-spacer { width: 76px; height: 58px; }
+    button { width: 76px; height: 58px; border: 1px solid #4b4b4b; border-radius: 12px; background: #222; color: #fff; font-size: 24px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .action-button { width: auto; min-width: 112px; height: 44px; padding: 0 14px; font-size: 15px; }
+    .center-button { font-size: 14px; font-weight: 700; }
     button:active { transform: scale(0.97); background: #2d2d2d; }
+    @media (max-height: 760px) { canvas { max-width: 50vh; } .controls { margin-top: 10px; } button { height: 52px; } .dpad { grid-template-columns: repeat(3, 70px); } .dpad-spacer { width: 70px; height: 52px; } }
   </style>
 </head>
 <body>
@@ -26,24 +31,33 @@
     <canvas id="game" width="560" height="560" aria-label="Snake Spielfeld"></canvas>
     <div class="info">
       Tastatur: Pfeiltasten / WASD · Pause: P oder Leertaste · Neustart: R<br />
-      Touch: Buttons nutzen oder auf dem Spielfeld wischen
+      Handy/Tablet: Steuerkreuz, Touch-Buttons oder Wischen
       <div class="stats" aria-live="polite">
         <span>Score: <strong id="score">0</strong></span>
         <span>Bestwert: <strong id="highScore">0</strong></span>
       </div>
-      <div class="actions">
-        <button id="pauseButton" class="action-button" type="button">Pause</button>
-        <button id="restartButton" class="action-button" type="button">Neustart</button>
-        <button id="autoPlayButton" class="action-button" type="button">Autoplay</button>
+      <div class="actions" aria-label="Spielaktionen">
+        <button class="action-button" type="button" data-action="pause">Pause</button>
+        <button class="action-button" type="button" data-action="restart">Neustart</button>
+        <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
       </div>
     </div>
 
-    <div class="controls" aria-label="Touch Steuerung">
-      <div class="row"><button type="button" data-dir="up" aria-label="Hoch">▲</button></div>
-      <div class="row">
+    <div class="controls" aria-label="Handy und Tablet Steuerung">
+      <div class="dpad">
+        <span class="dpad-spacer" aria-hidden="true"></span>
+        <button type="button" data-dir="up" aria-label="Hoch">▲</button>
+        <span class="dpad-spacer" aria-hidden="true"></span>
         <button type="button" data-dir="left" aria-label="Links">◀</button>
-        <button type="button" data-dir="down" aria-label="Runter">▼</button>
+        <button class="center-button" type="button" data-action="pause" aria-label="Pause oder Weiter">Pause</button>
         <button type="button" data-dir="right" aria-label="Rechts">▶</button>
+        <span class="dpad-spacer" aria-hidden="true"></span>
+        <button type="button" data-dir="down" aria-label="Runter">▼</button>
+        <span class="dpad-spacer" aria-hidden="true"></span>
+      </div>
+      <div class="row">
+        <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
+        <button class="action-button" type="button" data-action="restart">Neustart</button>
       </div>
     </div>
   </main>
@@ -53,9 +67,8 @@
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("score");
     const highScoreEl = document.getElementById("highScore");
-    const pauseButton = document.getElementById("pauseButton");
-    const restartButton = document.getElementById("restartButton");
-    const autoPlayButton = document.getElementById("autoPlayButton");
+    const pauseButtons = document.querySelectorAll('[data-action="pause"]');
+    const autoPlayButtons = document.querySelectorAll('[data-action="autoplay"]');
 
     const gridSize = 21;
     const tileSize = canvas.width / gridSize;
@@ -81,7 +94,7 @@
     }
 
     function saveHighScore(value) {
-      try { localStorage.setItem(highScoreKey, String(value)); } catch { /* optional */ }
+      try { localStorage.setItem(highScoreKey, String(value)); } catch { /* Highscore ist optional. */ }
     }
 
     function updateScoreDisplay() {
@@ -89,8 +102,12 @@
       highScoreEl.textContent = highScore;
     }
 
-    function updateAutoPlayButton() {
-      autoPlayButton.textContent = isAutoPlaying ? "Autoplay aus" : "Autoplay";
+    function updatePauseButtons() {
+      pauseButtons.forEach((button) => { button.textContent = isPaused ? "Weiter" : "Pause"; });
+    }
+
+    function updateAutoPlayButtons() {
+      autoPlayButtons.forEach((button) => { button.textContent = isAutoPlaying ? "Autoplay aus" : "Autoplay"; });
     }
 
     function placeFood() {
@@ -119,8 +136,8 @@
       isPaused = false;
       isAutoPlaying = false;
       tickMs = 120;
-      pauseButton.textContent = "Pause";
-      updateAutoPlayButton();
+      updatePauseButtons();
+      updateAutoPlayButtons();
       updateScoreDisplay();
       placeFood();
     }
@@ -128,11 +145,9 @@
     function simulateMove(testSnake, vector, testFood) {
       const newHead = getNextPosition(testSnake[0], vector);
       if (!isInsideBoard(newHead)) return null;
-
       const eatsFood = Boolean(testFood && samePosition(newHead, testFood));
       const collisionSegments = eatsFood ? testSnake : testSnake.slice(0, -1);
       if (collisionSegments.some((segment) => samePosition(segment, newHead))) return null;
-
       const movedSnake = [newHead, ...testSnake];
       if (!eatsFood) movedSnake.pop();
       return { snake: movedSnake, ateFood: eatsFood };
@@ -164,11 +179,9 @@
       const blocked = new Set(testSnake.slice(1).map(positionKey));
       const visited = new Set([positionKey(start)]);
       const queue = [{ position: start, path: [], direction: currentDirection }];
-
       while (queue.length > 0) {
         const current = queue.shift();
         if (samePosition(current.position, targetFood)) return current.path;
-
         directions.forEach((option) => {
           if (current.path.length === 0 && isReverseMove(option.vector, current.direction)) return;
           const next = getNextPosition(current.position, option.vector);
@@ -189,13 +202,11 @@
     function scoreAutoPlayMove(option) {
       const simulation = simulateMove(snake, option.vector, food);
       if (!simulation) return null;
-
       const head = simulation.snake[0];
       const reachableTiles = countReachableTiles(head, simulation.snake);
       const pathAfterMove = simulation.ateFood ? [] : findPathToFood(simulation.snake, option.vector, food);
       const maxReachableTiles = gridSize * gridSize - simulation.snake.length + 1;
       const minimumSafeSpace = Math.min(maxReachableTiles, Math.max(8, simulation.snake.length + 4));
-
       return {
         ...option,
         reachableTiles,
@@ -211,7 +222,6 @@
       if (!food) return;
       let rankedMoves = directions.filter((option) => !isReverseMove(option.vector, dir)).map(scoreAutoPlayMove).filter(Boolean);
       if (rankedMoves.length === 0) rankedMoves = directions.map(scoreAutoPlayMove).filter(Boolean);
-
       rankedMoves.sort((a, b) => {
         if (a.hasEnoughSpace !== b.hasEnoughSpace) return b.hasEnoughSpace - a.hasEnoughSpace;
         if (a.safeContinuation !== b.safeContinuation) return b.safeContinuation - a.safeContinuation;
@@ -220,7 +230,6 @@
         if (a.reachableTiles !== b.reachableTiles) return b.reachableTiles - a.reachableTiles;
         return a.distanceToFood - b.distanceToFood;
       });
-
       if (rankedMoves.length > 0) nextDir = { ...rankedMoves[0].vector };
     }
 
@@ -234,7 +243,7 @@
     function togglePause() {
       if (gameOver || gameWon) return;
       isPaused = !isPaused;
-      pauseButton.textContent = isPaused ? "Weiter" : "Pause";
+      updatePauseButtons();
     }
 
     function toggleAutoPlay() {
@@ -242,22 +251,20 @@
       isAutoPlaying = !isAutoPlaying;
       if (isAutoPlaying && isPaused) {
         isPaused = false;
-        pauseButton.textContent = "Pause";
+        updatePauseButtons();
       }
-      updateAutoPlayButton();
+      updateAutoPlayButtons();
     }
 
     function update() {
       if (gameOver || gameWon || isPaused) return;
       if (isAutoPlaying) chooseAutoPlayDirection();
-
       dir = nextDir;
       const simulation = simulateMove(snake, dir, food);
       if (!simulation) {
         gameOver = true;
         return;
       }
-
       snake = simulation.snake;
       if (simulation.ateFood) {
         score += 1;
@@ -275,14 +282,8 @@
       ctx.strokeStyle = "#242424";
       for (let i = 0; i <= gridSize; i += 1) {
         const p = i * tileSize;
-        ctx.beginPath();
-        ctx.moveTo(p, 0);
-        ctx.lineTo(p, canvas.height);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, p);
-        ctx.lineTo(canvas.width, p);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(canvas.width, p); ctx.stroke();
       }
     }
 
@@ -301,17 +302,14 @@
       ctx.fillStyle = "#1a1a1a";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       drawGrid();
-
       if (food) {
         ctx.fillStyle = "#ff4d4d";
         ctx.fillRect(food.x * tileSize + 2, food.y * tileSize + 2, tileSize - 4, tileSize - 4);
       }
-
       snake.forEach((segment, index) => {
         ctx.fillStyle = index === 0 ? "#87ff39" : "#40d553";
         ctx.fillRect(segment.x * tileSize + 1, segment.y * tileSize + 1, tileSize - 2, tileSize - 2);
       });
-
       if (isAutoPlaying && !isPaused && !gameOver && !gameWon) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.44)";
         ctx.fillRect(12, 12, 118, 32);
@@ -320,15 +318,24 @@
         ctx.font = "16px sans-serif";
         ctx.fillText("Autoplay", 24, 34);
       }
-      if (isPaused) drawOverlay("Pause", "P, Leertaste oder Weiter drücken");
-      if (gameOver) drawOverlay("Game Over", "R oder Neustart drücken");
-      if (gameWon) drawOverlay("Gewonnen!", "R oder Neustart drücken");
+      if (isPaused) drawOverlay("Pause", "Touch: Weiter drücken");
+      if (gameOver) drawOverlay("Game Over", "Touch: Neustart drücken");
+      if (gameWon) drawOverlay("Gewonnen!", "Touch: Neustart drücken");
     }
 
     function gameLoop() {
       update();
       draw();
       setTimeout(() => requestAnimationFrame(gameLoop), tickMs);
+    }
+
+    function bindControlButton(button, handler) {
+      const wrappedHandler = (event) => {
+        event.preventDefault();
+        handler(event);
+      };
+      button.addEventListener("click", wrappedHandler);
+      button.addEventListener("touchstart", wrappedHandler, { passive: false });
     }
 
     window.addEventListener("keydown", (event) => {
@@ -342,19 +349,12 @@
       if (key === "arrowright" || key === "d") setDirection("right");
     });
 
-    pauseButton.addEventListener("click", togglePause);
-    restartButton.addEventListener("click", reset);
-    autoPlayButton.addEventListener("click", toggleAutoPlay);
-
     document.querySelectorAll("button[data-dir]").forEach((button) => {
-      const direction = button.dataset.dir;
-      const handler = (event) => {
-        event.preventDefault();
-        setDirection(direction);
-      };
-      button.addEventListener("click", handler);
-      button.addEventListener("touchstart", handler, { passive: false });
+      bindControlButton(button, () => setDirection(button.dataset.dir));
     });
+    document.querySelectorAll('[data-action="pause"]').forEach((button) => bindControlButton(button, togglePause));
+    document.querySelectorAll('[data-action="restart"]').forEach((button) => bindControlButton(button, reset));
+    document.querySelectorAll('[data-action="autoplay"]').forEach((button) => bindControlButton(button, toggleAutoPlay));
 
     let touchStartX = 0;
     let touchStartY = 0;
