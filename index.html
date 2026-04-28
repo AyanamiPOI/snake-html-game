@@ -5,99 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Snake mit Touch</title>
   <style>
-    :root {
-      color-scheme: dark;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #101010;
-      color: #fff;
-      font-family: system-ui, sans-serif;
-      touch-action: none;
-    }
-
-    .wrap {
-      text-align: center;
-      width: min(92vw, 480px);
-    }
-
-    h1 {
-      margin-bottom: 10px;
-      font-size: clamp(1.4rem, 4vw, 2rem);
-    }
-
-    canvas {
-      width: 100%;
-      max-width: 420px;
-      aspect-ratio: 1;
-      background: #1a1a1a;
-      border: 2px solid #3a3a3a;
-      image-rendering: pixelated;
-      border-radius: 8px;
-    }
-
-    .info {
-      margin-top: 10px;
-      opacity: 0.95;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .controls {
-      margin-top: 14px;
-      display: grid;
-      gap: 8px;
-      justify-content: center;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    .row {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    button {
-      width: 70px;
-      height: 54px;
-      border: 1px solid #4b4b4b;
-      border-radius: 10px;
-      background: #222;
-      color: #fff;
-      font-size: 22px;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-
-    button:active {
-      transform: scale(0.97);
-      background: #2d2d2d;
-    }
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 12px; background: #101010; color: #fff; font-family: system-ui, sans-serif; touch-action: none; }
+    .wrap { text-align: center; width: min(94vw, 620px); }
+    h1 { margin: 0 0 10px; font-size: clamp(1.4rem, 4vw, 2rem); }
+    canvas { width: 100%; max-width: 560px; aspect-ratio: 1; background: #1a1a1a; border: 2px solid #3a3a3a; image-rendering: pixelated; border-radius: 8px; }
+    .info { margin-top: 10px; opacity: 0.95; font-size: 14px; line-height: 1.5; }
+    .stats, .actions, .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .stats { margin-top: 8px; gap: 10px; }
+    .actions { margin-top: 10px; }
+    .controls { margin-top: 14px; display: grid; gap: 10px; justify-content: center; user-select: none; -webkit-user-select: none; }
+    .dpad { display: grid; grid-template-columns: repeat(3, 76px); gap: 8px; justify-content: center; align-items: center; }
+    .dpad-spacer { width: 76px; height: 58px; }
+    button { width: 76px; height: 58px; border: 1px solid #4b4b4b; border-radius: 12px; background: #222; color: #fff; font-size: 24px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .action-button { width: auto; min-width: 112px; height: 44px; padding: 0 14px; font-size: 15px; }
+    .center-button { font-size: 14px; font-weight: 700; }
+    button:active { transform: scale(0.97); background: #2d2d2d; }
+    @media (max-height: 760px) { canvas { max-width: 50vh; } .controls { margin-top: 10px; } button { height: 52px; } .dpad { grid-template-columns: repeat(3, 70px); } .dpad-spacer { width: 70px; height: 52px; } }
   </style>
 </head>
 <body>
   <main class="wrap">
     <h1>🐍 Snake</h1>
-    <canvas id="game" width="420" height="420" aria-label="Snake Spielfeld"></canvas>
+    <canvas id="game" width="560" height="560" aria-label="Snake Spielfeld"></canvas>
     <div class="info">
-      Tastatur: Pfeiltasten / WASD · Neustart: R<br />
-      Touch: Buttons nutzen oder auf dem Spielfeld wischen<br />
-      Score: <span id="score">0</span>
+      Tastatur: Pfeiltasten / WASD · Pause: P oder Leertaste · Neustart: R<br />
+      Handy/Tablet: Steuerkreuz, Touch-Buttons oder Wischen
+      <div class="stats" aria-live="polite">
+        <span>Score: <strong id="score">0</strong></span>
+        <span>Bestwert: <strong id="highScore">0</strong></span>
+      </div>
+      <div class="actions" aria-label="Spielaktionen">
+        <button class="action-button" type="button" data-action="pause">Pause</button>
+        <button class="action-button" type="button" data-action="restart">Neustart</button>
+        <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
+      </div>
     </div>
 
-    <div class="controls" aria-label="Touch Steuerung">
-      <div class="row">
+    <div class="controls" aria-label="Handy und Tablet Steuerung">
+      <div class="dpad">
+        <span class="dpad-spacer" aria-hidden="true"></span>
         <button type="button" data-dir="up" aria-label="Hoch">▲</button>
+        <span class="dpad-spacer" aria-hidden="true"></span>
+        <button type="button" data-dir="left" aria-label="Links">◀</button>
+        <button class="center-button" type="button" data-action="pause" aria-label="Pause oder Weiter">Pause</button>
+        <button type="button" data-dir="right" aria-label="Rechts">▶</button>
+        <span class="dpad-spacer" aria-hidden="true"></span>
+        <button type="button" data-dir="down" aria-label="Runter">▼</button>
+        <span class="dpad-spacer" aria-hidden="true"></span>
       </div>
       <div class="row">
-        <button type="button" data-dir="left" aria-label="Links">◀</button>
-        <button type="button" data-dir="down" aria-label="Runter">▼</button>
-        <button type="button" data-dir="right" aria-label="Rechts">▶</button>
+        <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
+        <button class="action-button" type="button" data-action="restart">Neustart</button>
       </div>
     </div>
   </main>
@@ -106,45 +66,171 @@
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("score");
+    const highScoreEl = document.getElementById("highScore");
+    const pauseButtons = document.querySelectorAll('[data-action="pause"]');
+    const autoPlayButtons = document.querySelectorAll('[data-action="autoplay"]');
 
     const gridSize = 21;
     const tileSize = canvas.width / gridSize;
+    const highScoreKey = "snakeHighScore";
+    const directions = [
+      { name: "up", vector: { x: 0, y: -1 } },
+      { name: "down", vector: { x: 0, y: 1 } },
+      { name: "left", vector: { x: -1, y: 0 } },
+      { name: "right", vector: { x: 1, y: 0 } },
+    ];
 
-    let snake;
-    let dir;
-    let nextDir;
-    let food;
-    let score;
-    let gameOver;
-    let tickMs;
+    let snake, dir, nextDir, food, score, highScore, gameOver, gameWon, isPaused, isAutoPlaying, tickMs;
+
+    const samePosition = (a, b) => a.x === b.x && a.y === b.y;
+    const positionKey = (position) => `${position.x},${position.y}`;
+    const isInsideBoard = (position) => position.x >= 0 && position.x < gridSize && position.y >= 0 && position.y < gridSize;
+    const getNextPosition = (position, vector) => ({ x: position.x + vector.x, y: position.y + vector.y });
+    const getManhattanDistance = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    const isReverseMove = (vector, currentDirection) => vector.x === -currentDirection.x && vector.y === -currentDirection.y;
+
+    function readHighScore() {
+      try { return Number(localStorage.getItem(highScoreKey)) || 0; } catch { return 0; }
+    }
+
+    function saveHighScore(value) {
+      try { localStorage.setItem(highScoreKey, String(value)); } catch { /* Highscore ist optional. */ }
+    }
+
+    function updateScoreDisplay() {
+      scoreEl.textContent = score;
+      highScoreEl.textContent = highScore;
+    }
+
+    function updatePauseButtons() {
+      pauseButtons.forEach((button) => { button.textContent = isPaused ? "Weiter" : "Pause"; });
+    }
+
+    function updateAutoPlayButtons() {
+      autoPlayButtons.forEach((button) => { button.textContent = isAutoPlaying ? "Autoplay aus" : "Autoplay"; });
+    }
+
+    function placeFood() {
+      const emptyTiles = [];
+      for (let y = 0; y < gridSize; y += 1) {
+        for (let x = 0; x < gridSize; x += 1) {
+          if (!snake.some((segment) => segment.x === x && segment.y === y)) emptyTiles.push({ x, y });
+        }
+      }
+      if (emptyTiles.length === 0) {
+        food = null;
+        gameWon = true;
+        return;
+      }
+      food = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+    }
 
     function reset() {
       snake = [{ x: 10, y: 10 }];
       dir = { x: 1, y: 0 };
       nextDir = { x: 1, y: 0 };
       score = 0;
+      highScore = readHighScore();
       gameOver = false;
+      gameWon = false;
+      isPaused = false;
+      isAutoPlaying = false;
       tickMs = 120;
-      scoreEl.textContent = score;
+      updatePauseButtons();
+      updateAutoPlayButtons();
+      updateScoreDisplay();
       placeFood();
     }
 
-    function placeFood() {
-      while (true) {
-        const candidate = {
-          x: Math.floor(Math.random() * gridSize),
-          y: Math.floor(Math.random() * gridSize),
-        };
+    function simulateMove(testSnake, vector, testFood) {
+      const newHead = getNextPosition(testSnake[0], vector);
+      if (!isInsideBoard(newHead)) return null;
+      const eatsFood = Boolean(testFood && samePosition(newHead, testFood));
+      const collisionSegments = eatsFood ? testSnake : testSnake.slice(0, -1);
+      if (collisionSegments.some((segment) => samePosition(segment, newHead))) return null;
+      const movedSnake = [newHead, ...testSnake];
+      if (!eatsFood) movedSnake.pop();
+      return { snake: movedSnake, ateFood: eatsFood };
+    }
 
-        const snakeOnTile = snake.some(
-          (segment) => segment.x === candidate.x && segment.y === candidate.y,
-        );
-
-        if (!snakeOnTile) {
-          food = candidate;
-          return;
-        }
+    function countReachableTiles(start, testSnake) {
+      const blocked = new Set(testSnake.slice(1).map(positionKey));
+      const visited = new Set([positionKey(start)]);
+      const queue = [start];
+      let count = 0;
+      while (queue.length > 0) {
+        const current = queue.shift();
+        count += 1;
+        directions.forEach(({ vector }) => {
+          const next = getNextPosition(current, vector);
+          const key = positionKey(next);
+          if (isInsideBoard(next) && !blocked.has(key) && !visited.has(key)) {
+            visited.add(key);
+            queue.push(next);
+          }
+        });
       }
+      return count;
+    }
+
+    function findPathToFood(testSnake, currentDirection, targetFood) {
+      if (!targetFood) return [];
+      const start = testSnake[0];
+      const blocked = new Set(testSnake.slice(1).map(positionKey));
+      const visited = new Set([positionKey(start)]);
+      const queue = [{ position: start, path: [], direction: currentDirection }];
+      while (queue.length > 0) {
+        const current = queue.shift();
+        if (samePosition(current.position, targetFood)) return current.path;
+        directions.forEach((option) => {
+          if (current.path.length === 0 && isReverseMove(option.vector, current.direction)) return;
+          const next = getNextPosition(current.position, option.vector);
+          const key = positionKey(next);
+          if (isInsideBoard(next) && !blocked.has(key) && !visited.has(key)) {
+            visited.add(key);
+            queue.push({ position: next, path: [...current.path, option.name], direction: option.vector });
+          }
+        });
+      }
+      return [];
+    }
+
+    function hasSafeContinuation(testSnake, currentDirection) {
+      return directions.some((option) => !isReverseMove(option.vector, currentDirection) && simulateMove(testSnake, option.vector, null));
+    }
+
+    function scoreAutoPlayMove(option) {
+      const simulation = simulateMove(snake, option.vector, food);
+      if (!simulation) return null;
+      const head = simulation.snake[0];
+      const reachableTiles = countReachableTiles(head, simulation.snake);
+      const pathAfterMove = simulation.ateFood ? [] : findPathToFood(simulation.snake, option.vector, food);
+      const maxReachableTiles = gridSize * gridSize - simulation.snake.length + 1;
+      const minimumSafeSpace = Math.min(maxReachableTiles, Math.max(8, simulation.snake.length + 4));
+      return {
+        ...option,
+        reachableTiles,
+        canReachFood: simulation.ateFood || pathAfterMove.length > 0,
+        hasEnoughSpace: reachableTiles >= minimumSafeSpace,
+        safeContinuation: simulation.ateFood || hasSafeContinuation(simulation.snake, option.vector),
+        pathLength: simulation.ateFood ? 0 : pathAfterMove.length || Number.POSITIVE_INFINITY,
+        distanceToFood: food ? getManhattanDistance(head, food) : 0,
+      };
+    }
+
+    function chooseAutoPlayDirection() {
+      if (!food) return;
+      let rankedMoves = directions.filter((option) => !isReverseMove(option.vector, dir)).map(scoreAutoPlayMove).filter(Boolean);
+      if (rankedMoves.length === 0) rankedMoves = directions.map(scoreAutoPlayMove).filter(Boolean);
+      rankedMoves.sort((a, b) => {
+        if (a.hasEnoughSpace !== b.hasEnoughSpace) return b.hasEnoughSpace - a.hasEnoughSpace;
+        if (a.safeContinuation !== b.safeContinuation) return b.safeContinuation - a.safeContinuation;
+        if (a.canReachFood !== b.canReachFood) return b.canReachFood - a.canReachFood;
+        if (a.pathLength !== b.pathLength) return a.pathLength - b.pathLength;
+        if (a.reachableTiles !== b.reachableTiles) return b.reachableTiles - a.reachableTiles;
+        return a.distanceToFood - b.distanceToFood;
+      });
+      if (rankedMoves.length > 0) nextDir = { ...rankedMoves[0].vector };
     }
 
     function setDirection(direction) {
@@ -154,44 +240,41 @@
       if (direction === "right" && dir.x !== -1) nextDir = { x: 1, y: 0 };
     }
 
+    function togglePause() {
+      if (gameOver || gameWon) return;
+      isPaused = !isPaused;
+      updatePauseButtons();
+    }
+
+    function toggleAutoPlay() {
+      if (gameOver || gameWon) return;
+      isAutoPlaying = !isAutoPlaying;
+      if (isAutoPlaying && isPaused) {
+        isPaused = false;
+        updatePauseButtons();
+      }
+      updateAutoPlayButtons();
+    }
+
     function update() {
-      if (gameOver) {
-        return;
-      }
-
+      if (gameOver || gameWon || isPaused) return;
+      if (isAutoPlaying) chooseAutoPlayDirection();
       dir = nextDir;
-      const head = snake[0];
-      const newHead = { x: head.x + dir.x, y: head.y + dir.y };
-
-      const wallHit =
-        newHead.x < 0 ||
-        newHead.x >= gridSize ||
-        newHead.y < 0 ||
-        newHead.y >= gridSize;
-
-      if (wallHit) {
+      const simulation = simulateMove(snake, dir, food);
+      if (!simulation) {
         gameOver = true;
         return;
       }
-
-      const bodyHit = snake.some(
-        (segment) => segment.x === newHead.x && segment.y === newHead.y,
-      );
-
-      if (bodyHit) {
-        gameOver = true;
-        return;
-      }
-
-      snake.unshift(newHead);
-
-      if (newHead.x === food.x && newHead.y === food.y) {
+      snake = simulation.snake;
+      if (simulation.ateFood) {
         score += 1;
-        scoreEl.textContent = score;
         tickMs = Math.max(65, tickMs - 2);
+        if (score > highScore) {
+          highScore = score;
+          saveHighScore(highScore);
+        }
+        updateScoreDisplay();
         placeFood();
-      } else {
-        snake.pop();
       }
     }
 
@@ -199,52 +282,45 @@
       ctx.strokeStyle = "#242424";
       for (let i = 0; i <= gridSize; i += 1) {
         const p = i * tileSize;
-        ctx.beginPath();
-        ctx.moveTo(p, 0);
-        ctx.lineTo(p, canvas.height);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(0, p);
-        ctx.lineTo(canvas.width, p);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(canvas.width, p); ctx.stroke();
       }
+    }
+
+    function drawOverlay(title, subtitle) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.62)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.font = "bold 34px sans-serif";
+      ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 10);
+      ctx.font = "16px sans-serif";
+      ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 + 22);
     }
 
     function draw() {
       ctx.fillStyle = "#1a1a1a";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       drawGrid();
-
-      ctx.fillStyle = "#ff4d4d";
-      ctx.fillRect(
-        food.x * tileSize + 2,
-        food.y * tileSize + 2,
-        tileSize - 4,
-        tileSize - 4,
-      );
-
+      if (food) {
+        ctx.fillStyle = "#ff4d4d";
+        ctx.fillRect(food.x * tileSize + 2, food.y * tileSize + 2, tileSize - 4, tileSize - 4);
+      }
       snake.forEach((segment, index) => {
         ctx.fillStyle = index === 0 ? "#87ff39" : "#40d553";
-        ctx.fillRect(
-          segment.x * tileSize + 1,
-          segment.y * tileSize + 1,
-          tileSize - 2,
-          tileSize - 2,
-        );
+        ctx.fillRect(segment.x * tileSize + 1, segment.y * tileSize + 1, tileSize - 2, tileSize - 2);
       });
-
-      if (gameOver) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (isAutoPlaying && !isPaused && !gameOver && !gameWon) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.44)";
+        ctx.fillRect(12, 12, 118, 32);
         ctx.fillStyle = "#fff";
-        ctx.textAlign = "center";
-        ctx.font = "bold 34px sans-serif";
-        ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 10);
+        ctx.textAlign = "left";
         ctx.font = "16px sans-serif";
-        ctx.fillText("R für Neustart", canvas.width / 2, canvas.height / 2 + 22);
+        ctx.fillText("Autoplay", 24, 34);
       }
+      if (isPaused) drawOverlay("Pause", "Touch: Weiter drücken");
+      if (gameOver) drawOverlay("Game Over", "Touch: Neustart drücken");
+      if (gameWon) drawOverlay("Gewonnen!", "Touch: Neustart drücken");
     }
 
     function gameLoop() {
@@ -253,12 +329,20 @@
       setTimeout(() => requestAnimationFrame(gameLoop), tickMs);
     }
 
+    function bindControlButton(button, handler) {
+      const wrappedHandler = (event) => {
+        event.preventDefault();
+        handler(event);
+      };
+      button.addEventListener("click", wrappedHandler);
+      button.addEventListener("touchstart", wrappedHandler, { passive: false });
+    }
+
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
-      if (key === "r") {
-        reset();
-        return;
-      }
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
+      if (key === "r") return reset();
+      if (key === "p" || event.key === " ") return togglePause();
       if (key === "arrowup" || key === "w") setDirection("up");
       if (key === "arrowdown" || key === "s") setDirection("down");
       if (key === "arrowleft" || key === "a") setDirection("left");
@@ -266,48 +350,34 @@
     });
 
     document.querySelectorAll("button[data-dir]").forEach((button) => {
-      const direction = button.dataset.dir;
-      const handler = (event) => {
-        event.preventDefault();
-        setDirection(direction);
-      };
-      button.addEventListener("click", handler);
-      button.addEventListener("touchstart", handler, { passive: false });
+      bindControlButton(button, () => setDirection(button.dataset.dir));
     });
+    document.querySelectorAll('[data-action="pause"]').forEach((button) => bindControlButton(button, togglePause));
+    document.querySelectorAll('[data-action="restart"]').forEach((button) => bindControlButton(button, reset));
+    document.querySelectorAll('[data-action="autoplay"]').forEach((button) => bindControlButton(button, toggleAutoPlay));
 
     let touchStartX = 0;
     let touchStartY = 0;
 
-    canvas.addEventListener(
-      "touchstart",
-      (event) => {
-        const touch = event.changedTouches[0];
-        touchStartX = touch.clientX;
-        touchStartY = touch.clientY;
-      },
-      { passive: true },
-    );
+    canvas.addEventListener("touchstart", (event) => {
+      const touch = event.changedTouches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    }, { passive: true });
 
-    canvas.addEventListener(
-      "touchend",
-      (event) => {
-        const touch = event.changedTouches[0];
-        const dx = touch.clientX - touchStartX;
-        const dy = touch.clientY - touchStartY;
-        const minSwipe = 22;
+    canvas.addEventListener("touchend", (event) => {
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      const minSwipe = 22;
+      if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipe) return;
+      if (Math.abs(dx) > Math.abs(dy)) setDirection(dx > 0 ? "right" : "left");
+      else setDirection(dy > 0 ? "down" : "up");
+    }, { passive: true });
 
-        if (Math.abs(dx) < minSwipe && Math.abs(dy) < minSwipe) {
-          return;
-        }
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-          setDirection(dx > 0 ? "right" : "left");
-        } else {
-          setDirection(dy > 0 ? "down" : "up");
-        }
-      },
-      { passive: true },
-    );
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && !gameOver && !gameWon && !isPaused) togglePause();
+    });
 
     reset();
     gameLoop();
