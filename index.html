@@ -3,76 +3,430 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Snake mit Touch</title>
+  <title>Snake mit Hauptmenü</title>
   <style>
-    :root { color-scheme: dark; }
+    :root {
+      color-scheme: dark;
+      --bg: #02070c;
+      --panel: rgba(4, 18, 28, 0.76);
+      --panel-strong: rgba(7, 25, 38, 0.92);
+      --cyan: #20e6ff;
+      --cyan-soft: rgba(32, 230, 255, 0.36);
+      --cyan-faint: rgba(32, 230, 255, 0.12);
+      --green: #7dff4d;
+      --green-soft: rgba(125, 255, 77, 0.22);
+      --violet: #a855ff;
+      --violet-soft: rgba(168, 85, 255, 0.28);
+      --text: #edfaff;
+      --muted: #9ed4df;
+    }
+
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 12px; background: #101010; color: #fff; font-family: system-ui, sans-serif; touch-action: none; }
-    .wrap { text-align: center; width: min(94vw, 620px); }
-    h1 { margin: 0 0 10px; font-size: clamp(1.4rem, 4vw, 2rem); }
-    canvas { width: 100%; max-width: 560px; aspect-ratio: 1; background: #1a1a1a; border: 2px solid #3a3a3a; image-rendering: pixelated; border-radius: 8px; }
-    .info { margin-top: 10px; opacity: 0.95; font-size: 14px; line-height: 1.5; }
-    .stats, .actions, .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-    .stats { margin-top: 8px; gap: 10px; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 50% 96%, rgba(115, 37, 255, 0.34), transparent 22%),
+        radial-gradient(circle at 76% 8%, rgba(0, 255, 224, 0.16), transparent 28%),
+        radial-gradient(circle at 22% 12%, rgba(45, 126, 255, 0.13), transparent 30%),
+        linear-gradient(180deg, #02070c 0%, #07111a 48%, #030609 100%);
+      color: var(--text);
+      font-family: Orbitron, Eurostile, "Segoe UI", system-ui, sans-serif;
+      touch-action: none;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      background:
+        linear-gradient(rgba(32, 230, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(32, 230, 255, 0.035) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255, 255, 255, 0.55) 1px, transparent 1.6px);
+      background-size: 52px 52px, 52px 52px, 110px 110px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.12));
+      opacity: 0.46;
+    }
+
+    body::after {
+      background:
+        linear-gradient(90deg, transparent 0 7%, rgba(32, 230, 255, 0.22) 7.2%, transparent 7.6%, transparent 92.4%, rgba(32, 230, 255, 0.22) 92.8%, transparent 93.2%),
+        repeating-linear-gradient(180deg, transparent 0 7px, rgba(255, 255, 255, 0.018) 8px 9px);
+      opacity: 0.5;
+    }
+
+    .wrap {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      width: min(94vw, 680px);
+    }
+
+    h1 {
+      position: relative;
+      width: min(100%, 360px);
+      margin: 0 auto 18px;
+      padding: 12px 28px;
+      border: 1px solid var(--cyan-soft);
+      clip-path: polygon(8% 0, 92% 0, 100% 32%, 100% 68%, 92% 100%, 8% 100%, 0 68%, 0 32%);
+      background:
+        linear-gradient(90deg, transparent, rgba(32, 230, 255, 0.13), transparent),
+        rgba(3, 18, 28, 0.78);
+      color: var(--text);
+      font-size: clamp(2rem, 7vw, 3.25rem);
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 10px rgba(160, 252, 255, 0.9), 0 0 30px rgba(32, 230, 255, 0.65);
+      box-shadow: 0 0 22px rgba(32, 230, 255, 0.22), inset 0 0 20px rgba(32, 230, 255, 0.08);
+    }
+
+    h2, h3 { margin: 0; }
+
+    h2 {
+      font-size: clamp(2.35rem, 8vw, 4rem);
+      letter-spacing: 0.045em;
+      text-shadow: 0 0 12px rgba(200, 250, 255, 0.95), 0 0 36px rgba(32, 230, 255, 0.62);
+    }
+
+    h3 {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      font-size: clamp(1.25rem, 4vw, 1.9rem);
+      letter-spacing: 0.03em;
+      text-shadow: 0 0 12px rgba(210, 252, 255, 0.8);
+    }
+
+    h3::before,
+    h3::after {
+      content: "";
+      width: min(24vw, 120px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan));
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    h3::after { transform: scaleX(-1); }
+
+    canvas {
+      width: 100%;
+      max-width: 560px;
+      aspect-ratio: 1;
+      background: #06111a;
+      border: 1px solid rgba(32, 230, 255, 0.65);
+      image-rendering: pixelated;
+      border-radius: 18px;
+      box-shadow: 0 0 24px rgba(32, 230, 255, 0.28), inset 0 0 26px rgba(32, 230, 255, 0.09);
+    }
+
+    button {
+      position: relative;
+      width: 76px;
+      height: 58px;
+      border: 1px solid rgba(32, 230, 255, 0.52);
+      border-radius: 0;
+      clip-path: polygon(12% 0, 88% 0, 100% 22%, 100% 78%, 88% 100%, 12% 100%, 0 78%, 0 22%);
+      background:
+        linear-gradient(135deg, rgba(32, 230, 255, 0.14), transparent 45%, rgba(32, 230, 255, 0.08)),
+        rgba(5, 22, 34, 0.9);
+      color: var(--text);
+      font-size: 24px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      text-shadow: 0 0 8px rgba(224, 252, 255, 0.8);
+      box-shadow: 0 0 16px rgba(32, 230, 255, 0.18), inset 0 0 14px rgba(32, 230, 255, 0.09);
+      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+
+    button:active {
+      transform: scale(0.97);
+      border-color: var(--cyan);
+      box-shadow: 0 0 22px rgba(32, 230, 255, 0.42), inset 0 0 18px rgba(32, 230, 255, 0.16);
+    }
+
+    .hidden { display: none !important; }
+
+    .menu-card {
+      position: relative;
+      display: grid;
+      gap: 18px;
+      width: min(100%, 580px);
+      margin: 0 auto;
+      padding: clamp(20px, 5vw, 42px);
+      border: 1px solid rgba(32, 230, 255, 0.62);
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 30%),
+        linear-gradient(135deg, rgba(32, 230, 255, 0.09), transparent 36%, rgba(168, 85, 255, 0.08)),
+        var(--panel);
+      box-shadow:
+        0 0 0 1px rgba(32, 230, 255, 0.08),
+        0 0 36px rgba(32, 230, 255, 0.32),
+        0 28px 80px rgba(0, 0, 0, 0.62),
+        inset 0 0 34px rgba(32, 230, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .menu-card::before,
+    .menu-card::after {
+      content: "";
+      position: absolute;
+      inset: 13px;
+      pointer-events: none;
+      border-radius: 22px;
+    }
+
+    .menu-card::before {
+      border-left: 4px solid rgba(32, 230, 255, 0.78);
+      border-right: 4px solid rgba(32, 230, 255, 0.78);
+      box-shadow: 0 0 20px rgba(32, 230, 255, 0.55), inset 0 0 24px rgba(32, 230, 255, 0.06);
+    }
+
+    .menu-card::after {
+      background:
+        linear-gradient(90deg, transparent, rgba(32, 230, 255, 0.18), transparent) top / 100% 1px no-repeat,
+        linear-gradient(90deg, transparent, rgba(32, 230, 255, 0.14), transparent) bottom / 100% 1px no-repeat,
+        repeating-linear-gradient(0deg, transparent 0 11px, rgba(32, 230, 255, 0.025) 12px);
+      opacity: 0.8;
+    }
+
+    .menu-card > * { position: relative; z-index: 1; }
+
+    .menu-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 3.4vw, 1.25rem);
+      line-height: 1.5;
+      text-shadow: 0 0 10px rgba(32, 230, 255, 0.22);
+    }
+
+    .menu-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0 8px;
+      padding: 18px clamp(18px, 5vw, 34px);
+      border: 1px solid rgba(32, 230, 255, 0.7);
+      clip-path: polygon(4% 0, 96% 0, 100% 28%, 100% 72%, 96% 100%, 4% 100%, 0 72%, 0 28%);
+      background:
+        linear-gradient(90deg, rgba(32, 230, 255, 0.12), transparent 42%, rgba(32, 230, 255, 0.1)),
+        rgba(2, 14, 23, 0.84);
+      box-shadow: 0 0 20px rgba(32, 230, 255, 0.23), inset 0 0 20px rgba(32, 230, 255, 0.08);
+      color: var(--text);
+      font-size: clamp(1.12rem, 4vw, 1.45rem);
+    }
+
+    .menu-stat strong {
+      font-size: clamp(2rem, 8vw, 3.2rem);
+      color: #d9ffff;
+      text-shadow: 0 0 12px rgba(180, 255, 255, 1), 0 0 34px rgba(32, 230, 255, 0.78);
+    }
+
+    .menu-button {
+      width: 100%;
+      min-height: 66px;
+      height: auto;
+      margin-top: 6px;
+      border-color: rgba(168, 85, 255, 0.9);
+      background:
+        linear-gradient(90deg, rgba(168, 85, 255, 0.26), rgba(50, 16, 92, 0.6), rgba(168, 85, 255, 0.26)),
+        rgba(16, 8, 30, 0.9);
+      color: #f3e8ff;
+      font-size: clamp(1.45rem, 5vw, 2.45rem);
+      font-weight: 800;
+      letter-spacing: 0.035em;
+      text-shadow: 0 0 12px rgba(245, 232, 255, 1), 0 0 32px rgba(168, 85, 255, 0.9);
+      box-shadow: 0 0 28px rgba(168, 85, 255, 0.46), inset 0 0 22px rgba(168, 85, 255, 0.16);
+    }
+
+    .difficulty-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(8px, 2.5vw, 14px);
+      margin-top: 14px;
+    }
+
+    .difficulty-button {
+      width: 100%;
+      height: 58px;
+      font-size: clamp(0.95rem, 3.5vw, 1.35rem);
+    }
+
+    .difficulty-button.active {
+      border-color: var(--green);
+      background:
+        radial-gradient(circle at 50% 50%, rgba(125, 255, 77, 0.34), transparent 66%),
+        linear-gradient(135deg, rgba(125, 255, 77, 0.24), rgba(10, 38, 10, 0.9));
+      color: #f3ffe8;
+      text-shadow: 0 0 10px rgba(244, 255, 232, 1), 0 0 26px rgba(125, 255, 77, 0.95);
+      box-shadow: 0 0 26px rgba(125, 255, 77, 0.58), inset 0 0 20px rgba(125, 255, 77, 0.18);
+    }
+
+    .info {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      text-shadow: 0 0 10px rgba(32, 230, 255, 0.15);
+    }
+
+    .stats, .actions, .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .stats {
+      margin-top: 8px;
+      gap: 10px;
+      color: var(--text);
+    }
+
     .actions { margin-top: 10px; }
-    .controls { margin-top: 14px; display: grid; gap: 10px; justify-content: center; user-select: none; -webkit-user-select: none; }
-    .dpad { display: grid; grid-template-columns: repeat(3, 76px); gap: 8px; justify-content: center; align-items: center; }
+
+    .controls {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 76px);
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+    }
+
     .dpad-spacer { width: 76px; height: 58px; }
-    button { width: 76px; height: 58px; border: 1px solid #4b4b4b; border-radius: 12px; background: #222; color: #fff; font-size: 24px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-    .action-button { width: auto; min-width: 112px; height: 44px; padding: 0 14px; font-size: 15px; }
+
+    .action-button {
+      width: auto;
+      min-width: 112px;
+      height: 44px;
+      padding: 0 14px;
+      font-size: 15px;
+    }
+
     .center-button { font-size: 14px; font-weight: 700; }
-    button:active { transform: scale(0.97); background: #2d2d2d; }
-    @media (max-height: 760px) { canvas { max-width: 50vh; } .controls { margin-top: 10px; } button { height: 52px; } .dpad { grid-template-columns: repeat(3, 70px); } .dpad-spacer { width: 70px; height: 52px; } }
+
+    @media (max-width: 430px) {
+      .menu-card { padding: 20px 16px; }
+      .difficulty-buttons { gap: 7px; }
+      .difficulty-button { font-size: 0.9rem; }
+      h3::before, h3::after { width: 46px; }
+    }
+
+    @media (max-height: 760px) {
+      canvas { max-width: 50vh; }
+      .controls { margin-top: 10px; }
+      button { height: 52px; }
+      .dpad { grid-template-columns: repeat(3, 70px); }
+      .dpad-spacer { width: 70px; height: 52px; }
+      .menu-card { gap: 12px; }
+    }
   </style>
 </head>
 <body>
   <main class="wrap">
     <h1>🐍 Snake</h1>
-    <canvas id="game" width="560" height="560" aria-label="Snake Spielfeld"></canvas>
-    <div class="info">
-      Tastatur: Pfeiltasten / WASD · Pause: P oder Leertaste · Neustart: R<br />
-      Handy/Tablet: Steuerkreuz, Touch-Buttons oder Wischen
-      <div class="stats" aria-live="polite">
-        <span>Score: <strong id="score">0</strong></span>
-        <span>Bestwert: <strong id="highScore">0</strong></span>
-      </div>
-      <div class="actions" aria-label="Spielaktionen">
-        <button class="action-button" type="button" data-action="pause">Pause</button>
-        <button class="action-button" type="button" data-action="restart">Neustart</button>
-        <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
-      </div>
-    </div>
 
-    <div class="controls" aria-label="Handy und Tablet Steuerung">
-      <div class="dpad">
-        <span class="dpad-spacer" aria-hidden="true"></span>
-        <button type="button" data-dir="up" aria-label="Hoch">▲</button>
-        <span class="dpad-spacer" aria-hidden="true"></span>
-        <button type="button" data-dir="left" aria-label="Links">◀</button>
-        <button class="center-button" type="button" data-action="pause" aria-label="Pause oder Weiter">Pause</button>
-        <button type="button" data-dir="right" aria-label="Rechts">▶</button>
-        <span class="dpad-spacer" aria-hidden="true"></span>
-        <button type="button" data-dir="down" aria-label="Runter">▼</button>
-        <span class="dpad-spacer" aria-hidden="true"></span>
+    <section id="mainMenu" class="menu-card" aria-label="Hauptmenü">
+      <h2>Hauptmenü</h2>
+      <p>Wähle einen Schwierigkeitsgrad und starte ein neues Spiel.</p>
+      <div class="menu-stat">
+        <span>Highscore</span>
+        <strong id="menuHighScore">0</strong>
       </div>
-      <div class="row">
-        <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
-        <button class="action-button" type="button" data-action="restart">Neustart</button>
+      <div>
+        <h3>Schwierigkeitsgrad</h3>
+        <div class="difficulty-buttons" aria-label="Schwierigkeitsgrad wählen">
+          <button class="difficulty-button" type="button" data-difficulty="easy">Leicht</button>
+          <button class="difficulty-button" type="button" data-difficulty="normal">Normal</button>
+          <button class="difficulty-button" type="button" data-difficulty="hard">Schwer</button>
+        </div>
       </div>
-    </div>
+      <button class="menu-button" type="button" data-action="newgame">Neues Spiel</button>
+    </section>
+
+    <section id="gameArea" class="hidden" aria-label="Spielbereich">
+      <canvas id="game" width="560" height="560" aria-label="Snake Spielfeld"></canvas>
+      <div class="info">
+        Tastatur: Pfeiltasten / WASD · Pause: P oder Leertaste · Neustart: R<br />
+        Handy/Tablet: Steuerkreuz, Touch-Buttons oder Wischen
+        <div class="stats" aria-live="polite">
+          <span>Score: <strong id="score">0</strong></span>
+          <span>Bestwert: <strong id="highScore">0</strong></span>
+          <span>Modus: <strong id="difficultyLabel">Normal</strong></span>
+        </div>
+        <div class="actions" aria-label="Spielaktionen">
+          <button class="action-button" type="button" data-action="pause">Pause</button>
+          <button class="action-button" type="button" data-action="restart">Neustart</button>
+          <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
+          <button class="action-button" type="button" data-action="menu">Menü</button>
+        </div>
+      </div>
+
+      <div class="controls" aria-label="Handy und Tablet Steuerung">
+        <div class="dpad">
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <button type="button" data-dir="up" aria-label="Hoch">▲</button>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <button type="button" data-dir="left" aria-label="Links">◀</button>
+          <button class="center-button" type="button" data-action="pause" aria-label="Pause oder Weiter">Pause</button>
+          <button type="button" data-dir="right" aria-label="Rechts">▶</button>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <button type="button" data-dir="down" aria-label="Runter">▼</button>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+        </div>
+        <div class="row">
+          <button class="action-button" type="button" data-action="autoplay">Autoplay</button>
+          <button class="action-button" type="button" data-action="restart">Neustart</button>
+          <button class="action-button" type="button" data-action="menu">Menü</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
+    const mainMenu = document.getElementById("mainMenu");
+    const gameArea = document.getElementById("gameArea");
+    const menuHighScoreEl = document.getElementById("menuHighScore");
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
     const scoreEl = document.getElementById("score");
     const highScoreEl = document.getElementById("highScore");
+    const difficultyLabelEl = document.getElementById("difficultyLabel");
     const pauseButtons = document.querySelectorAll('[data-action="pause"]');
     const autoPlayButtons = document.querySelectorAll('[data-action="autoplay"]');
+    const difficultyButtons = document.querySelectorAll("[data-difficulty]");
 
     const gridSize = 21;
     const tileSize = canvas.width / gridSize;
     const highScoreKey = "snakeHighScore";
+    const difficultyKey = "snakeDifficulty";
+    const difficulties = {
+      easy: { label: "Leicht", startTickMs: 155, minTickMs: 85, speedStep: 1 },
+      normal: { label: "Normal", startTickMs: 120, minTickMs: 65, speedStep: 2 },
+      hard: { label: "Schwer", startTickMs: 90, minTickMs: 50, speedStep: 3 },
+    };
     const directions = [
       { name: "up", vector: { x: 0, y: -1 } },
       { name: "down", vector: { x: 0, y: 1 } },
@@ -80,7 +434,10 @@
       { name: "right", vector: { x: 1, y: 0 } },
     ];
 
-    let snake, dir, nextDir, food, score, highScore, gameOver, gameWon, isPaused, isAutoPlaying, tickMs;
+    let selectedDifficulty = localStorage.getItem(difficultyKey) || "normal";
+    if (!difficulties[selectedDifficulty]) selectedDifficulty = "normal";
+
+    let snake, dir, nextDir, food, score, highScore, gameOver, gameWon, isPaused, isAutoPlaying, tickMs, isMenuOpen;
 
     const samePosition = (a, b) => a.x === b.x && a.y === b.y;
     const positionKey = (position) => `${position.x},${position.y}`;
@@ -97,9 +454,21 @@
       try { localStorage.setItem(highScoreKey, String(value)); } catch { /* Highscore ist optional. */ }
     }
 
+    function saveDifficulty() {
+      try { localStorage.setItem(difficultyKey, selectedDifficulty); } catch { /* optional */ }
+    }
+
+    function updateDifficultyUi() {
+      difficultyButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.difficulty === selectedDifficulty);
+      });
+      if (difficultyLabelEl) difficultyLabelEl.textContent = difficulties[selectedDifficulty].label;
+    }
+
     function updateScoreDisplay() {
       scoreEl.textContent = score;
       highScoreEl.textContent = highScore;
+      menuHighScoreEl.textContent = readHighScore();
     }
 
     function updatePauseButtons() {
@@ -108,6 +477,22 @@
 
     function updateAutoPlayButtons() {
       autoPlayButtons.forEach((button) => { button.textContent = isAutoPlaying ? "Autoplay aus" : "Autoplay"; });
+    }
+
+    function showMainMenu() {
+      isMenuOpen = true;
+      isPaused = true;
+      mainMenu.classList.remove("hidden");
+      gameArea.classList.add("hidden");
+      menuHighScoreEl.textContent = readHighScore();
+      updateDifficultyUi();
+    }
+
+    function startNewGame() {
+      mainMenu.classList.add("hidden");
+      gameArea.classList.remove("hidden");
+      isMenuOpen = false;
+      resetGame();
     }
 
     function placeFood() {
@@ -125,7 +510,8 @@
       food = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
     }
 
-    function reset() {
+    function resetGame() {
+      const difficulty = difficulties[selectedDifficulty];
       snake = [{ x: 10, y: 10 }];
       dir = { x: 1, y: 0 };
       nextDir = { x: 1, y: 0 };
@@ -135,7 +521,8 @@
       gameWon = false;
       isPaused = false;
       isAutoPlaying = false;
-      tickMs = 120;
+      tickMs = difficulty.startTickMs;
+      updateDifficultyUi();
       updatePauseButtons();
       updateAutoPlayButtons();
       updateScoreDisplay();
@@ -241,13 +628,13 @@
     }
 
     function togglePause() {
-      if (gameOver || gameWon) return;
+      if (isMenuOpen || gameOver || gameWon) return;
       isPaused = !isPaused;
       updatePauseButtons();
     }
 
     function toggleAutoPlay() {
-      if (gameOver || gameWon) return;
+      if (isMenuOpen || gameOver || gameWon) return;
       isAutoPlaying = !isAutoPlaying;
       if (isAutoPlaying && isPaused) {
         isPaused = false;
@@ -257,7 +644,7 @@
     }
 
     function update() {
-      if (gameOver || gameWon || isPaused) return;
+      if (isMenuOpen || gameOver || gameWon || isPaused) return;
       if (isAutoPlaying) chooseAutoPlayDirection();
       dir = nextDir;
       const simulation = simulateMove(snake, dir, food);
@@ -267,8 +654,9 @@
       }
       snake = simulation.snake;
       if (simulation.ateFood) {
+        const difficulty = difficulties[selectedDifficulty];
         score += 1;
-        tickMs = Math.max(65, tickMs - 2);
+        tickMs = Math.max(difficulty.minTickMs, tickMs - difficulty.speedStep);
         if (score > highScore) {
           highScore = score;
           saveHighScore(highScore);
@@ -279,7 +667,7 @@
     }
 
     function drawGrid() {
-      ctx.strokeStyle = "#242424";
+      ctx.strokeStyle = "#173345";
       for (let i = 0; i <= gridSize; i += 1) {
         const p = i * tileSize;
         ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, canvas.height); ctx.stroke();
@@ -288,45 +676,58 @@
     }
 
     function drawOverlay(title, subtitle) {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.62)";
+      ctx.fillStyle = "rgba(0, 0, 0, 0.68)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = "#dfffff";
       ctx.textAlign = "center";
       ctx.font = "bold 34px sans-serif";
+      ctx.shadowColor = "#20e6ff";
+      ctx.shadowBlur = 18;
       ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 10);
       ctx.font = "16px sans-serif";
+      ctx.shadowBlur = 10;
       ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 + 22);
+      ctx.shadowBlur = 0;
     }
 
     function draw() {
-      ctx.fillStyle = "#1a1a1a";
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, "#06111a");
+      gradient.addColorStop(1, "#02070c");
+      ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       drawGrid();
       if (food) {
-        ctx.fillStyle = "#ff4d4d";
+        ctx.fillStyle = "#ff4d8d";
+        ctx.shadowColor = "#ff4d8d";
+        ctx.shadowBlur = 14;
         ctx.fillRect(food.x * tileSize + 2, food.y * tileSize + 2, tileSize - 4, tileSize - 4);
+        ctx.shadowBlur = 0;
       }
       snake.forEach((segment, index) => {
-        ctx.fillStyle = index === 0 ? "#87ff39" : "#40d553";
+        ctx.fillStyle = index === 0 ? "#d7ffe8" : "#20e6ff";
+        ctx.shadowColor = index === 0 ? "#7dff4d" : "#20e6ff";
+        ctx.shadowBlur = index === 0 ? 18 : 10;
         ctx.fillRect(segment.x * tileSize + 1, segment.y * tileSize + 1, tileSize - 2, tileSize - 2);
       });
+      ctx.shadowBlur = 0;
       if (isAutoPlaying && !isPaused && !gameOver && !gameWon) {
         ctx.fillStyle = "rgba(0, 0, 0, 0.44)";
         ctx.fillRect(12, 12, 118, 32);
-        ctx.fillStyle = "#fff";
+        ctx.fillStyle = "#dfffff";
         ctx.textAlign = "left";
         ctx.font = "16px sans-serif";
         ctx.fillText("Autoplay", 24, 34);
       }
-      if (isPaused) drawOverlay("Pause", "Touch: Weiter drücken");
-      if (gameOver) drawOverlay("Game Over", "Touch: Neustart drücken");
-      if (gameWon) drawOverlay("Gewonnen!", "Touch: Neustart drücken");
+      if (isPaused && !isMenuOpen) drawOverlay("Pause", "Touch: Weiter drücken");
+      if (gameOver) drawOverlay("Game Over", "Neustart oder Menü drücken");
+      if (gameWon) drawOverlay("Gewonnen!", "Neustart oder Menü drücken");
     }
 
     function gameLoop() {
       update();
-      draw();
-      setTimeout(() => requestAnimationFrame(gameLoop), tickMs);
+      if (!isMenuOpen) draw();
+      setTimeout(() => requestAnimationFrame(gameLoop), tickMs || 120);
     }
 
     function bindControlButton(button, handler) {
@@ -341,7 +742,9 @@
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
-      if (key === "r") return reset();
+      if (isMenuOpen && (key === "enter" || event.key === " ")) return startNewGame();
+      if (key === "escape") return showMainMenu();
+      if (key === "r") return isMenuOpen ? startNewGame() : resetGame();
       if (key === "p" || event.key === " ") return togglePause();
       if (key === "arrowup" || key === "w") setDirection("up");
       if (key === "arrowdown" || key === "s") setDirection("down");
@@ -349,12 +752,17 @@
       if (key === "arrowright" || key === "d") setDirection("right");
     });
 
-    document.querySelectorAll("button[data-dir]").forEach((button) => {
-      bindControlButton(button, () => setDirection(button.dataset.dir));
-    });
+    document.querySelectorAll("button[data-dir]").forEach((button) => bindControlButton(button, () => setDirection(button.dataset.dir)));
     document.querySelectorAll('[data-action="pause"]').forEach((button) => bindControlButton(button, togglePause));
-    document.querySelectorAll('[data-action="restart"]').forEach((button) => bindControlButton(button, reset));
+    document.querySelectorAll('[data-action="restart"]').forEach((button) => bindControlButton(button, resetGame));
     document.querySelectorAll('[data-action="autoplay"]').forEach((button) => bindControlButton(button, toggleAutoPlay));
+    document.querySelectorAll('[data-action="newgame"]').forEach((button) => bindControlButton(button, startNewGame));
+    document.querySelectorAll('[data-action="menu"]').forEach((button) => bindControlButton(button, showMainMenu));
+    difficultyButtons.forEach((button) => bindControlButton(button, () => {
+      selectedDifficulty = button.dataset.difficulty;
+      saveDifficulty();
+      updateDifficultyUi();
+    }));
 
     let touchStartX = 0;
     let touchStartY = 0;
@@ -376,10 +784,11 @@
     }, { passive: true });
 
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden && !gameOver && !gameWon && !isPaused) togglePause();
+      if (document.hidden && !isMenuOpen && !gameOver && !gameWon && !isPaused) togglePause();
     });
 
-    reset();
+    resetGame();
+    showMainMenu();
     gameLoop();
   </script>
 </body>
