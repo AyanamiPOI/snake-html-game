@@ -14,14 +14,7 @@ Ein kleines Snake-Spiel für den Browser und als Android-WebView-App. Das Spiel 
 
 ## Browser starten
 
-### Variante 1: Direkt öffnen
-Öffne `index.html` im Browser.
-
-### Variante 2: Live Server in VS Code
-1. Installiere die VS-Code-Erweiterung **Live Server** von Ritwick Dey.
-2. Öffne dieses Projekt in VS Code.
-3. Rechtsklick auf `index.html` → **Open with Live Server**.
-4. Öffne die lokale URL, zum Beispiel `http://127.0.0.1:5500/index.html`.
+Öffne `index.html` direkt im Browser.
 
 ## Android APK für Anfänger bauen
 
