@@ -23,12 +23,83 @@ Ein kleines Snake-Spiel für den Browser und als Android-WebView-App. Das Spiel 
 3. Rechtsklick auf `index.html` → **Open with Live Server**.
 4. Öffne die lokale URL, zum Beispiel `http://127.0.0.1:5500/index.html`.
 
-## Android APK bauen
-1. Öffne den Ordner `android-app` in **Android Studio**.
-2. Warte, bis der Gradle Sync abgeschlossen ist.
-3. Wähle **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
-4. Die APK liegt danach typischerweise unter:
-   - `android-app/app/build/outputs/apk/debug/app-debug.apk`
+## Android APK für Anfänger bauen
+
+Mit diesen Schritten kannst du aus dem Projekt eine installierbare Android-Datei (`.apk`) erstellen.
+
+### Was du brauchst
+- Einen Computer mit **Android Studio**
+- Dieses Projekt auf deinem Computer
+- Optional: ein Android-Handy oder Tablet zum Testen
+
+### 1. Android Studio installieren
+1. Lade Android Studio von der offiziellen Android-Developer-Webseite herunter.
+2. Installiere Android Studio mit den Standard-Einstellungen.
+3. Starte Android Studio einmal vollständig.
+4. Wenn Android Studio zusätzliche Komponenten wie Android SDK, Gradle oder Build Tools installieren möchte, bestätige die Installation.
+
+### 2. Projekt richtig öffnen
+1. Öffne Android Studio.
+2. Klicke auf **Open** oder **Open an existing project**.
+3. Wähle **nicht** den Hauptordner des ganzen Repositories aus, sondern den Ordner:
+   - `android-app`
+4. Klicke auf **OK** oder **Open**.
+
+Wichtig: In Android Studio muss also der Ordner `android-app` geöffnet sein. Dort liegen die Android-Dateien wie `build.gradle.kts`, `settings.gradle.kts` und der App-Ordner.
+
+### 3. Gradle Sync abwarten
+Nach dem Öffnen startet Android Studio normalerweise automatisch den **Gradle Sync**.
+
+1. Warte, bis unten oder oben keine Ladeanzeige mehr läuft.
+2. Wenn Android Studio fragt, ob fehlende SDKs oder Tools installiert werden sollen, klicke auf **Install** oder **Accept**.
+3. Wenn der Sync erfolgreich ist, sollte keine rote Fehlermeldung mehr angezeigt werden.
+
+Falls ein Fehler erscheint, prüfe zuerst:
+- Ist wirklich der Ordner `android-app` geöffnet?
+- Ist deine Internetverbindung aktiv?
+- Hat Android Studio alle vorgeschlagenen SDK-Komponenten installiert?
+
+### 4. APK bauen
+1. Klicke oben in der Menüleiste auf **Build**.
+2. Wähle **Build Bundle(s) / APK(s)**.
+3. Klicke auf **Build APK(s)**.
+4. Warte, bis Android Studio fertig ist.
+
+Wenn alles funktioniert hat, zeigt Android Studio unten rechts oder unten im Fenster eine Meldung wie **APK(s) generated successfully** an.
+
+### 5. APK-Datei finden
+Die fertige APK liegt normalerweise hier:
+
+```text
+android-app/app/build/outputs/apk/debug/app-debug.apk
+```
+
+In Android Studio kannst du nach dem Build oft direkt auf **locate** klicken. Dann öffnet sich der Ordner mit der APK-Datei.
+
+### 6. APK auf Handy oder Tablet installieren
+Es gibt zwei einfache Möglichkeiten.
+
+#### Möglichkeit A: APK-Datei übertragen
+1. Kopiere `app-debug.apk` auf dein Android-Gerät, zum Beispiel per USB-Kabel, Cloud oder Messenger.
+2. Öffne die APK-Datei auf dem Gerät.
+3. Android fragt eventuell, ob Apps aus dieser Quelle erlaubt sind.
+4. Erlaube die Installation für diese Quelle.
+5. Tippe auf **Installieren**.
+
+#### Möglichkeit B: Direkt aus Android Studio installieren
+1. Aktiviere auf deinem Android-Gerät die Entwickleroptionen und USB-Debugging.
+2. Verbinde das Gerät per USB mit dem Computer.
+3. Wähle das Gerät oben in Android Studio aus.
+4. Klicke auf den grünen **Run**-Button ▶.
+5. Android Studio installiert und startet die App automatisch.
+
+### 7. App testen
+Nach der Installation heißt die App aktuell **Snake**. Öffne sie auf deinem Android-Gerät und teste:
+- Steuerkreuz
+- Pause / Weiter
+- Neustart
+- Autoplay
+- Wischen auf dem Spielfeld
 
 ## Steuerung
 
