@@ -207,14 +207,187 @@
       placeFood();
     }
 
+    function samePosition(a, b) {
+      return a.x === b.x && a.y === b.y;
+    }
+
+    function positionKey(position) {
+      return `${position.x},${position.y}`;
+    }
+
+    function isInsideBoard(position) {
+      return (
+        position.x >= 0 &&
+        position.x < gridSize &&
+        position.y >= 0 &&
+        position.y < gridSize
+      );
+    }
+
+    function getNextPosition(position, vector) {
+      return { x: position.x + vector.x, y: position.y + vector.y };
+    }
+
+    function getManhattanDistance(a, b) {
+      return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    }
+
+    function isReverseMove(vector, currentDirection) {
+      return vector.x === -currentDirection.x && vector.y === -currentDirection.y;
+    }
+
+    function simulateMove(testSnake, vector, testFood) {
+      const newHead = getNextPosition(testSnake[0], vector);
+
+      if (!isInsideBoard(newHead)) {
+        return null;
+      }
+
+      const eatsFood = Boolean(testFood && samePosition(newHead, testFood));
+      const collisionSegments = eatsFood ? testSnake : testSnake.slice(0, -1);
+      const bodyHit = collisionSegments.some((segment) => samePosition(segment, newHead));
+
+      if (bodyHit) {
+        return null;
+      }
+
+      const movedSnake = [newHead, ...testSnake];
+      if (!eatsFood) {
+        movedSnake.pop();
+      }
+
+      return { snake: movedSnake, ateFood: eatsFood };
+    }
+
+    function countReachableTiles(start, testSnake) {
+      const blocked = new Set(testSnake.slice(1).map(positionKey));
+      const visited = new Set([positionKey(start)]);
+      const queue = [start];
+      let count = 0;
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+        count += 1;
+
+        directions.forEach(({ vector }) => {
+          const next = getNextPosition(current, vector);
+          const key = positionKey(next);
+
+          if (
+            isInsideBoard(next) &&
+            !blocked.has(key) &&
+            !visited.has(key)
+          ) {
+            visited.add(key);
+            queue.push(next);
+          }
+        });
+      }
+
+      return count;
+    }
+
+    function findPathToFood(testSnake, currentDirection, targetFood) {
+      if (!targetFood) {
+        return [];
+      }
+
+      const start = testSnake[0];
+      const blocked = new Set(testSnake.slice(1).map(positionKey));
+      const queue = [{ position: start, path: [], direction: currentDirection }];
+      const visited = new Set([positionKey(start)]);
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+
+        if (samePosition(current.position, targetFood)) {
+          return current.path;
+        }
+
+        directions.forEach((option) => {
+          if (
+            current.path.length === 0 &&
+            isReverseMove(option.vector, current.direction)
+          ) {
+            return;
+          }
+
+          const next = getNextPosition(current.position, option.vector);
+          const key = positionKey(next);
+
+          if (
+            isInsideBoard(next) &&
+            !blocked.has(key) &&
+            !visited.has(key)
+          ) {
+            visited.add(key);
+            queue.push({
+              position: next,
+              path: [...current.path, option.name],
+              direction: option.vector,
+            });
+          }
+        });
+      }
+
+      return [];
+    }
+
+    function scoreAutoPlayMove(option) {
+      const simulation = simulateMove(snake, option.vector, food);
+      if (!simulation) {
+        return null;
+      }
+
+      const simulatedHead = simulation.snake[0];
+      const reachableTiles = countReachableTiles(simulatedHead, simulation.snake);
+      const pathAfterMove = simulation.ateFood
+        ? []
+        : findPathToFood(simulation.snake, option.vector, food);
+      const canReachFood = simulation.ateFood || pathAfterMove.length > 0;
+      const minimumSafeSpace = Math.min(gridSize * gridSize, simulation.snake.length + 5);
+      const hasEnoughSpace = reachableTiles >= minimumSafeSpace;
+      const distanceToFood = food ? getManhattanDistance(simulatedHead, food) : 0;
+
+      return {
+        ...option,
+        simulation,
+        reachableTiles,
+        canReachFood,
+        hasEnoughSpace,
+        pathLength: simulation.ateFood ? 0 : pathAfterMove.length || Number.POSITIVE_INFINITY,
+        distanceToFood,
+      };
+    }
+
+    function chooseAutoPlayDirection() {
+      if (!food) {
+        return;
+      }
+
+      const rankedMoves = directions
+        .filter((option) => !isReverseMove(option.vector, dir))
+        .map(scoreAutoPlayMove)
+        .filter(Boolean)
+        .sort((a, b) => {
+          if (a.hasEnoughSpace !== b.hasEnoughSpace) return b.hasEnoughSpace - a.hasEnoughSpace;
+          if (a.canReachFood !== b.canReachFood) return b.canReachFood - a.canReachFood;
+          if (a.pathLength !== b.pathLength) return a.pathLength - b.pathLength;
+          if (a.reachableTiles !== b.reachableTiles) return b.reachableTiles - a.reachableTiles;
+          return a.distanceToFood - b.distanceToFood;
+        });
+
+      if (rankedMoves.length > 0) {
+        nextDir = { ...rankedMoves[0].vector };
+      }
+    }
+
     function placeFood() {
       const emptyTiles = [];
 
       for (let y = 0; y < gridSize; y += 1) {
         for (let x = 0; x < gridSize; x += 1) {
-          const snakeOnTile = snake.some(
-            (segment) => segment.x === x && segment.y === y,
-          );
+          const snakeOnTile = snake.some((segment) => segment.x === x && segment.y === y);
 
           if (!snakeOnTile) {
             emptyTiles.push({ x, y });
@@ -260,54 +433,6 @@
       updateAutoPlayButton();
     }
 
-    function isSafeMove(vector) {
-      const head = snake[0];
-      const newHead = { x: head.x + vector.x, y: head.y + vector.y };
-      const wallHit =
-        newHead.x < 0 ||
-        newHead.x >= gridSize ||
-        newHead.y < 0 ||
-        newHead.y >= gridSize;
-
-      if (wallHit) {
-        return false;
-      }
-
-      const eatsFood = food && newHead.x === food.x && newHead.y === food.y;
-      const collisionSegments = eatsFood ? snake : snake.slice(0, -1);
-      return !collisionSegments.some(
-        (segment) => segment.x === newHead.x && segment.y === newHead.y,
-      );
-    }
-
-    function chooseAutoPlayDirection() {
-      if (!food) {
-        return;
-      }
-
-      const options = directions
-        .filter((option) => {
-          const reversesDirection =
-            option.vector.x === -dir.x && option.vector.y === -dir.y;
-          return !reversesDirection && isSafeMove(option.vector);
-        })
-        .map((option) => {
-          const head = snake[0];
-          const nextHead = {
-            x: head.x + option.vector.x,
-            y: head.y + option.vector.y,
-          };
-          const distanceToFood =
-            Math.abs(nextHead.x - food.x) + Math.abs(nextHead.y - food.y);
-          return { ...option, distanceToFood };
-        })
-        .sort((a, b) => a.distanceToFood - b.distanceToFood);
-
-      if (options.length > 0) {
-        nextDir = { ...options[0].vector };
-      }
-    }
-
     function update() {
       if (gameOver || gameWon || isPaused) {
         return;
@@ -318,34 +443,16 @@
       }
 
       dir = nextDir;
-      const head = snake[0];
-      const newHead = { x: head.x + dir.x, y: head.y + dir.y };
+      const simulation = simulateMove(snake, dir, food);
 
-      const wallHit =
-        newHead.x < 0 ||
-        newHead.x >= gridSize ||
-        newHead.y < 0 ||
-        newHead.y >= gridSize;
-
-      if (wallHit) {
+      if (!simulation) {
         gameOver = true;
         return;
       }
 
-      const eatsFood = food && newHead.x === food.x && newHead.y === food.y;
-      const collisionSegments = eatsFood ? snake : snake.slice(0, -1);
-      const bodyHit = collisionSegments.some(
-        (segment) => segment.x === newHead.x && segment.y === newHead.y,
-      );
+      snake = simulation.snake;
 
-      if (bodyHit) {
-        gameOver = true;
-        return;
-      }
-
-      snake.unshift(newHead);
-
-      if (eatsFood) {
+      if (simulation.ateFood) {
         score += 1;
         tickMs = Math.max(65, tickMs - 2);
 
@@ -356,8 +463,6 @@
 
         updateScoreDisplay();
         placeFood();
-      } else {
-        snake.pop();
       }
     }
 
