@@ -22,7 +22,7 @@
 
     .wrap {
       text-align: center;
-      width: min(92vw, 480px);
+      width: min(92vw, 620px);
     }
 
     h1 {
@@ -32,7 +32,7 @@
 
     canvas {
       width: 100%;
-      max-width: 420px;
+      max-width: 560px;
       aspect-ratio: 1;
       background: #1a1a1a;
       border: 2px solid #3a3a3a;
@@ -106,7 +106,7 @@
 <body>
   <main class="wrap">
     <h1>🐍 Snake</h1>
-    <canvas id="game" width="420" height="420" aria-label="Snake Spielfeld"></canvas>
+    <canvas id="game" width="560" height="560" aria-label="Snake Spielfeld"></canvas>
     <div class="info">
       Tastatur: Pfeiltasten / WASD · Pause: P oder Leertaste · Neustart: R<br />
       Touch: Buttons nutzen oder auf dem Spielfeld wischen
@@ -355,7 +355,7 @@
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
 
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(event.key)) {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) {
         event.preventDefault();
       }
 
