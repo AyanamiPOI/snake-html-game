@@ -57,6 +57,7 @@
 
     .actions {
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 8px;
       margin-top: 10px;
@@ -117,6 +118,7 @@
       <div class="actions">
         <button id="pauseButton" class="action-button" type="button">Pause</button>
         <button id="restartButton" class="action-button" type="button">Neustart</button>
+        <button id="autoPlayButton" class="action-button" type="button">Autoplay</button>
       </div>
     </div>
 
@@ -139,10 +141,17 @@
     const highScoreEl = document.getElementById("highScore");
     const pauseButton = document.getElementById("pauseButton");
     const restartButton = document.getElementById("restartButton");
+    const autoPlayButton = document.getElementById("autoPlayButton");
 
     const gridSize = 21;
     const tileSize = canvas.width / gridSize;
     const highScoreKey = "snakeHighScore";
+    const directions = [
+      { name: "up", vector: { x: 0, y: -1 } },
+      { name: "down", vector: { x: 0, y: 1 } },
+      { name: "left", vector: { x: -1, y: 0 } },
+      { name: "right", vector: { x: 1, y: 0 } },
+    ];
 
     let snake;
     let dir;
@@ -153,6 +162,7 @@
     let gameOver;
     let gameWon;
     let isPaused;
+    let isAutoPlaying;
     let tickMs;
 
     function readHighScore() {
@@ -176,6 +186,10 @@
       highScoreEl.textContent = highScore;
     }
 
+    function updateAutoPlayButton() {
+      autoPlayButton.textContent = isAutoPlaying ? "Autoplay aus" : "Autoplay";
+    }
+
     function reset() {
       snake = [{ x: 10, y: 10 }];
       dir = { x: 1, y: 0 };
@@ -185,8 +199,10 @@
       gameOver = false;
       gameWon = false;
       isPaused = false;
+      isAutoPlaying = false;
       tickMs = 120;
       pauseButton.textContent = "Pause";
+      updateAutoPlayButton();
       updateScoreDisplay();
       placeFood();
     }
@@ -231,9 +247,74 @@
       pauseButton.textContent = isPaused ? "Weiter" : "Pause";
     }
 
+    function toggleAutoPlay() {
+      if (gameOver || gameWon) {
+        return;
+      }
+
+      isAutoPlaying = !isAutoPlaying;
+      if (isAutoPlaying && isPaused) {
+        isPaused = false;
+        pauseButton.textContent = "Pause";
+      }
+      updateAutoPlayButton();
+    }
+
+    function isSafeMove(vector) {
+      const head = snake[0];
+      const newHead = { x: head.x + vector.x, y: head.y + vector.y };
+      const wallHit =
+        newHead.x < 0 ||
+        newHead.x >= gridSize ||
+        newHead.y < 0 ||
+        newHead.y >= gridSize;
+
+      if (wallHit) {
+        return false;
+      }
+
+      const eatsFood = food && newHead.x === food.x && newHead.y === food.y;
+      const collisionSegments = eatsFood ? snake : snake.slice(0, -1);
+      return !collisionSegments.some(
+        (segment) => segment.x === newHead.x && segment.y === newHead.y,
+      );
+    }
+
+    function chooseAutoPlayDirection() {
+      if (!food) {
+        return;
+      }
+
+      const options = directions
+        .filter((option) => {
+          const reversesDirection =
+            option.vector.x === -dir.x && option.vector.y === -dir.y;
+          return !reversesDirection && isSafeMove(option.vector);
+        })
+        .map((option) => {
+          const head = snake[0];
+          const nextHead = {
+            x: head.x + option.vector.x,
+            y: head.y + option.vector.y,
+          };
+          const distanceToFood =
+            Math.abs(nextHead.x - food.x) + Math.abs(nextHead.y - food.y);
+          return { ...option, distanceToFood };
+        })
+        .sort((a, b) => a.distanceToFood - b.distanceToFood);
+
+      if (options.length > 0) {
+        nextDir = { ...options[0].vector };
+      }
+    }
+
     function update() {
       if (gameOver || gameWon || isPaused) {
         return;
+      }
+
+      if (isAutoPlaying) {
+        chooseAutoPlayDirection();
       }
 
       dir = nextDir;
@@ -333,6 +414,15 @@
         );
       });
 
+      if (isAutoPlaying && !isPaused && !gameOver && !gameWon) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.44)";
+        ctx.fillRect(12, 12, 118, 32);
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "left";
+        ctx.font = "16px sans-serif";
+        ctx.fillText("Autoplay", 24, 34);
+      }
+
       if (isPaused) {
         drawOverlay("Pause", "P, Leertaste oder Weiter drücken");
       }
@@ -377,6 +467,7 @@
 
     pauseButton.addEventListener("click", togglePause);
     restartButton.addEventListener("click", reset);
+    autoPlayButton.addEventListener("click", toggleAutoPlay);
 
     document.querySelectorAll("button[data-dir]").forEach((button) => {
       const direction = button.dataset.dir;
